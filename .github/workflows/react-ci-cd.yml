@@ -1,0 +1,75 @@
+name: React CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # Job 1: Build and Test
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Step 1: Checkout code
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    # Step 2: Setup Node.js
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    # Step 3: Install dependencies
+    - name: Install dependencies
+      run: npm ci
+    
+    # Step 4: Run linting (optional)
+    - name: Run ESLint
+      run: npm run lint || true
+    
+    # Step 5: Run tests
+    - name: Run tests
+      run: npm test -- --watchAll=false --coverage
+    
+    # Step 6: Build application
+    - name: Build application
+      run: npm run build
+    
+    # Step 7: Upload build artifacts
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: react-build
+        path: build/
+    
+    # Step 8: Upload test coverage (optional)
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      if: success()
+
+  # Job 2: Deploy to GitHub Pages
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    # Step 1: Download build artifacts
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: react-build
+    
+    # Step 2: Deploy to GitHub Pages
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: react-build
+        branch: gh-pages

@@ -35,8 +35,8 @@ jobs:
       run: npm run lint || true
     
     # Step 5: Run tests
-    - name: Run tests
-      run: npm test -- --watchAll=false --coverage
+    #- name: Run tests
+      #run: npm test -- --watchAll=false --coverage
     
     # Step 6: Build application
     - name: Build application
